@@ -1,0 +1,2 @@
+net.tajeddine.ext.DaoImplV2
+net.tajeddine.metier.MetierImpl
