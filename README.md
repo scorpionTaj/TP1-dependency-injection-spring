@@ -1,68 +1,178 @@
+
 # Systèmes Informatiques Distribués et Middlewares - TP1
 
-## Aperçu du Projet
+## 1. Introduction
 
-Ce projet illustre l'implémentation d'un système distribué en utilisant le framework Spring pour l'injection de dépendances. L'objectif est de découpler les composants et de gérer dynamiquement les dépendances via une configuration XML et des annotations.
+Ce projet illustre la mise en œuvre d’un petit système distribué en Java, reposant sur le principe d’injection de dépendances (DI) fourni par Spring. L’objectif est de découpler les différentes couches (DAO, métier, présentation) et de gérer dynamiquement leurs dépendances :
 
-## Structure
+- **Via un fichier XML** (`config.xml`)  
+- **Via des annotations** (`@Repository`, `@Service`, scan de composants)
 
-Le projet est organisé comme suit :
+---
 
-- **`net.tajeddine.dao`** : Contient les objets d'accès aux données (DAOs) pour récupérer les données.
-- **`net.tajeddine.metier`** : Contient les implémentations de la logique métier.
-- **`net.tajeddine.ext`** : Contient des implémentations alternatives des DAOs.
-- **`net.tajeddine.pres`** : Contient les couches de présentation pour tester et exécuter l'application.
-- **`resources/config.xml`** : Fichier de configuration XML de Spring pour l'injection de dépendances.
+## 2. Structure du projet
 
-## Composants Clés
-
-### Couche DAO
-- **`DaoImpl`** : Récupère les données depuis une base de données (simulée).
-- **`DaoImplV2`** : Récupère les données depuis des capteurs (simulés).
-
-### Couche Métier
-- **`MetierImpl`** : Implémente la logique métier principale en utilisant un DAO pour récupérer les données.
-
-### Couche Présentation
-- **`PresSpringXML`** : Démonstration de l'injection de dépendances via une configuration XML Spring.
-- **`Pres2`** : Démonstration de l'injection de dépendances manuelle via réflexion et fichiers de configuration.
-
-## Configuration
-
-### Configuration XML Spring (`config.xml`)
-Définit les beans pour l'injection de dépendances :
-```xml
-<bean id="d" class="net.tajeddine.ext.DaoImplV2"/>
-<bean id="metier" class="net.tajeddine.metier.MetierImpl">
-    <constructor-arg ref="d"/>
-</bean>
+```
+src/
+├── main/
+│   ├── java/
+│   │   ├── net/tajeddine/dao/
+│   │   │   └── DaoImpl.java
+│   │   ├── net/tajeddine/ext/
+│   │   │   └── DaoImplV2.java
+│   │   ├── net/tajeddine/metier/
+│   │   │   └── MetierImpl.java
+│   │   └── net/tajeddine/pres/
+│   │       ├── Pres1.java
+│   │       ├── Pres2.java
+│   │       ├── PresSpringXML.java
+│   │       └── Pres2.java
+│   └── resources/
+│       └── config.xml
+└── pom.xml
 ```
 
-### Dépendances Maven
-Le projet utilise les dépendances suivantes :
-- **Spring Core** : `org.springframework:spring-core:6.2.5`
-- **Spring Context** : `org.springframework:spring-context:6.2.5`
-- **Spring Beans** : `org.springframework:spring-beans:6.2.5`
+- **`net.tajeddine.dao`** : DAO « classique » (simulation BD).  
+- **`net.tajeddine.ext`** : DAO alternatif (simulation capteurs).  
+- **`net.tajeddine.metier`** : logique métier consommatrice d’un DAO.  
+- **`net.tajeddine.pres`** : couche de présentation/test, deux modes d’injection.  
+- **`resources/config.xml`** : configuration Spring XML.  
 
-## Instructions d'Exécution
+---
 
-1. **Utilisation de Spring XML (`PresSpringXML`)** :
-   - Assurez-vous que `config.xml` est correctement configuré.
-   - Exécutez la classe `PresSpringXML`.
+## 3. Composants clés
 
-2. **Injection Manuelle (`Pres2`)** :
-   - Créez un fichier `config.txt` avec le contenu suivant :
-     ```
-     net.tajeddine.dao.DaoImpl
-     net.tajeddine.metier.MetierImpl
-     ```
-   - Exécutez la classe `Pres2`.
+### 3.1 Couche DAO
 
-## Résultat
+- **`DaoImpl`**  
+  – Simule l’accès à une base de données.  
+  – Méthode `double getData()` retourne une valeur fixe.
 
-L'application calcule un résultat basé sur les données récupérées par le DAO et traitées par la logique métier. Le résultat est affiché dans la console.
+- **`DaoImplV2`**  
+  – Simule la récupération de données depuis des capteurs.  
+  – Méthode `double getData()` retourne une autre valeur fixe.
 
-## Remarques
+### 3.2 Couche Métier
 
-- Le projet démontre l'injection de dépendances basée sur XML et annotations.
-- Les annotations `@Repository` et `@Service` sont utilisées pour le scan des composants dans Spring.
+- **`MetierImpl`**  
+  – Annoté `@Service` ou défini en XML.  
+  – Implémente `double calculate()` qui récupère `getData()` depuis le DAO injecté, puis applique un calcul (ex. multiplication, transformation).
+
+### 3.3 Couche Présentation
+
+- **`PresSpringXML`**  
+  – Point d’entrée `main(String[] args)`.  
+  – Charge le contexte Spring à partir de `config.xml`.  
+  – Récupère le bean métier (`metier`) et affiche le résultat.
+
+- **`Pres2`**  
+  – Injection manuelle « à la main » : lecture d’un fichier `config.txt` listant les classes du DAO et du métier.  
+  – Utilise réflexivité pour instancier et lier les objets, puis affiche le résultat.
+
+---
+
+## 4. Configuration
+
+### 4.1 Fichier Spring XML (`src/main/resources/config.xml`)
+
+```xml
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+         http://www.springframework.org/schema/beans
+         http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+  <!-- DAO alternatif (capteurs) -->
+  <bean id="d" class="net.tajeddine.ext.DaoImplV2"/>
+
+  <!-- Service métier -->
+  <bean id="metier" class="net.tajeddine.metier.MetierImpl">
+    <constructor-arg ref="d"/>
+  </bean>
+
+</beans>
+```
+
+### 4.2 Injection manuelle (`Pres2`)
+
+Créez un fichier `config.txt` à la racine de `resources/` ou du projet :
+
+```
+net.tajeddine.dao.DaoImpl
+net.tajeddine.metier.MetierImpl
+```
+
+Le programme `Pres2` lit ces deux lignes, instancie chaque classe, injecte le DAO dans le métier, puis exécute `calculate()`.
+
+---
+
+## 5. Dépendances Maven
+
+```xml
+<dependencies>
+  <!-- Spring Core / Context / Beans -->
+  <dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-core</artifactId>
+    <version>6.2.5</version>
+  </dependency>
+  <dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-context</artifactId>
+    <version>6.2.5</version>
+  </dependency>
+  <dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-beans</artifactId>
+    <version>6.2.5</version>
+  </dependency>
+</dependencies>
+```
+
+---
+
+## 6. Exécution
+
+1. **Mode Spring XML (`PresSpringXML`)**
+   ```bash
+   mvn compile exec:java -Dexec.mainClass=net.tajeddine.pres.PresSpringXML
+   ```
+    - Charge `config.xml`
+    - Affiche le résultat de `metier.calculate()`.
+
+2. **Mode Injection manuelle (`Pres2`)**
+   ```bash
+   mvn compile exec:java -Dexec.mainClass=net.tajeddine.pres.Pres2
+   ```
+    - Lit `config.txt`
+    - Instancie et injecte via réflexivité
+    - Affiche le même résultat.
+
+---
+
+## 7. Résultat attendu
+
+Dans les deux modes, la console affiche une valeur numérique calculée, par exemple :
+
+```
+Résultat = 42.0
+```
+
+---
+
+## 8. Remarques & Extensions
+
+- Démontre l’injection de dépendances **XML vs réflexivité**.
+- Peut être étendu pour gérer :
+    - Injection par setter ou champ
+    - Scanning d’annotations (`@Repository`, `@Service`)
+    - Gestion de scopes (`singleton`/`prototype`)
+    - Plusieurs implémentations de DAO injectables à chaud
+
+---
+
+## 9. Auteurs & Licence
+
+- **Auteur** : Tajeddine Bourhim
+- **Cours** : Master SDIA, Systèmes Informatiques Distribués et Middlewares
+- **Licence** : MIT
